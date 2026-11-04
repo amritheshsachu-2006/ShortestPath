@@ -37,6 +37,7 @@ from algorithms import (
     ALGORITHMS
 )
 
+# Absolute paths for Vercel Serverless container compatibility
 base_dir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(
     __name__,
@@ -46,9 +47,33 @@ app = Flask(
 app.config.from_object(Config)
 app.permanent_session_lifetime = timedelta(days=7)
 
-# Initialize zero-database in-memory store on startup
-with app.app_context():
-    init_db()
+# Safe database initialization
+try:
+    with app.app_context():
+        init_db()
+except Exception as e:
+    print(f"[Startup Warning] Database initialization deferred: {e}")
+
+# WSGI Middleware to fix Vercel Serverless Function routing
+class VercelPathFixMiddleware:
+    """Restores the original request URI if rewritten by Vercel serverless functions."""
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        orig_uri = environ.get('HTTP_X_FORWARDED_URI') or environ.get('RAW_URI') or environ.get('REQUEST_URI')
+        if orig_uri:
+            path = orig_uri.split('?')[0]
+            if path and path != '/api/index':
+                environ['PATH_INFO'] = path
+        path_info = environ.get('PATH_INFO', '')
+        if path_info == '/api/index':
+            environ['PATH_INFO'] = '/'
+        elif path_info.startswith('/api/index/'):
+            environ['PATH_INFO'] = path_info[len('/api/index'):]
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = VercelPathFixMiddleware(app.wsgi_app)
 
 def login_required(view):
     """Decorator to require login for web pages and JSON APIs."""
@@ -58,7 +83,7 @@ def login_required(view):
             if request.path.startswith('/api/'):
                 return jsonify({"success": False, "error": "Authentication required. Please log in."}), 401
             flash("Please log in to access this page.", "warning")
-            return redirect(url_for('login', next=request.url))
+            return redirect(url_for('login', next=request.path))
         return view(**kwargs)
     return wrapped_view
 
@@ -108,7 +133,7 @@ def login():
             
             flash(f"Welcome back, {user['full_name']}!", "success")
             next_page = request.args.get('next')
-            if next_page and not next_page.startswith('/api/'):
+            if next_page and next_page.startswith('/') and not next_page.startswith('//') and not next_page.startswith('/api/'):
                 return redirect(next_page)
             return redirect(url_for('dashboard'))
         else:
@@ -168,7 +193,7 @@ def register():
             flash("Account created successfully! Welcome to Shortest Path Finder.", "success")
             return redirect(url_for('dashboard'))
         except Exception as e:
-            flash("An error occurred during registration. Please try again.", "danger")
+            flash(f"An error occurred during registration: {str(e)}", "danger")
             return render_template('register.html', full_name=full_name, username=username, email=email)
 
     return render_template('register.html')
@@ -213,9 +238,17 @@ def logout():
 # ==========================================
 
 @app.route('/')
-@login_required
 def root():
-    return redirect(url_for('dashboard'))
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+@app.route('/api/index')
+def api_index_route():
+    """Fallback route for Vercel serverless function."""
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
 
 @app.route('/dashboard')
 @login_required
@@ -414,4 +447,3 @@ def api_history():
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
-
