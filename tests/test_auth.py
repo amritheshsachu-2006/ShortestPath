@@ -136,3 +136,15 @@ def test_forgot_password_reset(client):
         'password': 'newpassword123'
     }, follow_redirects=True)
     assert b"Welcome back, Eve Adams" in login_resp.data
+
+def test_malformed_url_redirects_to_login(client):
+    # Malformed concatenated domain from old browser history/tab
+    resp = client.get('/https:/shortest-path-sooty.vercel.app/', follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers['Location'] == '/login'
+
+def test_unknown_path_redirects_gracefully(client):
+    # Unknown 404 route should redirect safely to login when unauthenticated
+    resp = client.get('/some-nonexistent-route', follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers['Location'] == '/login'

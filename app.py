@@ -6,6 +6,7 @@ from flask import (
     url_for, session, flash, jsonify
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import timedelta
 
 from config import Config
@@ -54,25 +55,38 @@ try:
 except Exception as e:
     print(f"[Startup Warning] Database initialization deferred: {e}")
 
-# WSGI Middleware to fix Vercel Serverless Function routing
+# WSGI Middleware to fix Vercel Serverless Function routing and malformed URLs
 class VercelPathFixMiddleware:
-    """Restores the original request URI if rewritten by Vercel serverless functions."""
+    """Restores the original request URI if rewritten by Vercel serverless functions
+    and intercepts malformed concatenated URLs.
+    """
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        orig_uri = environ.get('HTTP_X_FORWARDED_URI') or environ.get('RAW_URI') or environ.get('REQUEST_URI')
-        if orig_uri:
-            path = orig_uri.split('?')[0]
-            if path and path != '/api/index':
-                environ['PATH_INFO'] = path
         path_info = environ.get('PATH_INFO', '')
-        if path_info == '/api/index':
+        orig_uri = environ.get('HTTP_X_FORWARDED_URI') or environ.get('RAW_URI') or environ.get('REQUEST_URI') or ''
+
+        # Intercept malformed recursive URLs like /https:/shortest-path-sooty.vercel.app/
+        if 'http:/' in path_info or 'https:/' in path_info or 'vercel.app' in path_info or 'http:/' in orig_uri or 'https:/' in orig_uri or 'vercel.app' in orig_uri:
+            start_response('302 Found', [('Location', '/login'), ('Content-Length', '0')])
+            return [b'']
+
+        if orig_uri:
+            clean_orig = orig_uri.split('?')[0]
+            if clean_orig and clean_orig not in ('/api/index', '/api/index/'):
+                environ['PATH_INFO'] = clean_orig
+
+        curr_path = environ.get('PATH_INFO', '')
+        if curr_path in ('/api/index', '/api/index/'):
             environ['PATH_INFO'] = '/'
-        elif path_info.startswith('/api/index/'):
-            environ['PATH_INFO'] = path_info[len('/api/index'):]
+        elif curr_path.startswith('/api/index/'):
+            environ['PATH_INFO'] = curr_path[len('/api/index'):]
+
         return self.wsgi_app(environ, start_response)
 
+# Apply proxy headers first, then URL path normalization
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.wsgi_app = VercelPathFixMiddleware(app.wsgi_app)
 
 def login_required(view):
@@ -83,7 +97,10 @@ def login_required(view):
             if request.path.startswith('/api/'):
                 return jsonify({"success": False, "error": "Authentication required. Please log in."}), 401
             flash("Please log in to access this page.", "warning")
-            return redirect(url_for('login', next=request.path))
+            clean_path = request.path if request.path and request.path not in ('/', '/login', '/logout') and 'http' not in request.path else None
+            if clean_path:
+                return redirect(url_for('login', next=clean_path))
+            return redirect(url_for('login'))
         return view(**kwargs)
     return wrapped_view
 
@@ -444,6 +461,25 @@ def api_history():
 
     affected = clear_user_search_history(user_id)
     return jsonify({"success": True, "message": f"Cleared {affected} history records."})
+
+# ==========================================
+# ERROR HANDLERS (Safe Serverless Fallbacks)
+# ==========================================
+
+@app.errorhandler(404)
+def handle_404(e):
+    """Graceful 404 handler preventing dead-ends or broken URL loops."""
+    raw = request.path or ''
+    if 'http' in raw or 'vercel.app' in raw or raw.startswith('//'):
+        return redirect(url_for('login'))
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+@app.errorhandler(500)
+def handle_500(e):
+    """Graceful 500 handler."""
+    return render_template('login.html', error="An unexpected server error occurred. Please try logging in again."), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
