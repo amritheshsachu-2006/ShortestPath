@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Shortest Path Finder</title>
+  <!-- Google Fonts & Font Awesome CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body class="auth-page">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo-badge">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <div>
+          <span class="academic-badge">B.Tech CS &bull; AGA Project</span>
+          <h1>Create Account</h1>
+          <p>Register to experiment with graph algorithms</p>
+        </div>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Registration Form -->
+      <form action="{{ url_for('register') }}" method="POST" autocomplete="off">
+        <div class="form-group">
+          <label for="full_name">Full Name</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-id-card input-icon"></i>
+            <input 
+              type="text" 
+              id="full_name" 
+              name="full_name" 
+              class="form-control" 
+              placeholder="e.g. John Doe" 
+              value="{{ full_name if full_name else '' }}"
+              required 
+              autofocus
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-at input-icon"></i>
+            <input 
+              type="text" 
+              id="username" 
+              name="username" 
+              class="form-control" 
+              placeholder="e.g. johndoe (alphanumeric)" 
+              value="{{ username if username else '' }}"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope input-icon"></i>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              class="form-control" 
+              placeholder="e.g. john@university.edu" 
+              value="{{ email if email else '' }}"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg_password">Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input 
+              type="password" 
+              id="reg_password" 
+              name="password" 
+              class="form-control" 
+              placeholder="At least 6 characters" 
+              required
+            >
+            <button type="button" class="password-toggle-btn" id="toggleRegPassword" aria-label="Toggle password visibility">
+              <i class="fa-solid fa-eye" id="toggleRegIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Confirm Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-shield-halved input-icon"></i>
+            <input 
+              type="password" 
+              id="confirm_password" 
+              name="confirm_password" 
+              class="form-control" 
+              placeholder="Re-enter your password" 
+              required
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="btn-auth-primary" style="margin-top: 24px;">
+          <i class="fa-solid fa-user-check"></i>
+          <span>Create My Account</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Already have an account? <a href="{{ url_for('login') }}">Sign In</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const toggleRegBtn = document.getElementById('toggleRegPassword');
+    const regPasswordInput = document.getElementById('reg_password');
+    const toggleRegIcon = document.getElementById('toggleRegIcon');
+
+    if (toggleRegBtn && regPasswordInput && toggleRegIcon) {
+      toggleRegBtn.addEventListener('click', () => {
+        const isPassword = regPasswordInput.getAttribute('type') === 'password';
+        regPasswordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        toggleRegIcon.classList.toggle('fa-eye', !isPassword);
+        toggleRegIcon.classList.toggle('fa-eye-slash', isPassword);
+      });
+    }
+  </script>
+</body>
+</html>
+

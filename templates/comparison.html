@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Algorithm Comparison{% endblock %}
+{% block page_title %}
+  <i class="fa-solid fa-chart-column" style="color: var(--btn-green); font-size: 22px;"></i>
+  Algorithm Performance Comparison
+{% endblock %}
+{% block page_subtitle %}Empirical benchmark and theoretical analysis across all 5 graph algorithms on the current topology.{% endblock %}
+
+{% block content %}
+<!-- Comparison Setup Toolbar -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-body" style="padding: 18px 24px;">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
+        <div>
+          <label for="compSource" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--heading-green);">
+            <i class="fa-solid fa-location-dot" style="color: #16a34a;"></i> Source Vertex
+          </label>
+          <select id="compSource" class="form-control" style="min-width: 140px; font-weight: 600;"></select>
+        </div>
+
+        <div>
+          <label for="compDestination" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--heading-green);">
+            <i class="fa-solid fa-flag-checkered" style="color: #dc2626;"></i> Destination Vertex
+          </label>
+          <select id="compDestination" class="form-control" style="min-width: 140px; font-weight: 600;"></select>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="btnRunComparison" style="padding: 10px 22px;">
+          <i class="fa-solid fa-play"></i> Run All 5 Algorithms
+        </button>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted); max-width: 380px;">
+        <i class="fa-solid fa-circle-info" style="color: #16a34a;"></i>
+        Benchmarks measure actual CPU execution time (ms) and operation counts on the active graph using Python's high-precision <code>time.perf_counter()</code>.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Summary Cards -->
+<div class="stats-grid" id="comparisonStatsGrid" style="display: none;">
+  <!-- Will be populated dynamically -->
+</div>
+
+<!-- Performance Charts (Chart.js) -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+  <!-- Execution Time Chart -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-stopwatch"></i> Execution Time Comparison (ms)</h3>
+      <span class="badge badge-blue">Lower is faster</span>
+    </div>
+    <div class="card-body">
+      <div style="position: relative; height: 280px;">
+        <canvas id="chartExecTime"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operations & Node Visits Chart -->
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-code-fork"></i> Operations & Relaxations</h3>
+      <span class="badge badge-purple">Algorithmic Workload</span>
+    </div>
+    <div class="card-body">
+      <div style="position: relative; height: 280px;">
+        <canvas id="chartOperations"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Side-by-Side Comparison Table -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-table-cells"></i> Detailed Comparison Matrix</h3>
+    <span class="badge badge-green">Live Academic Benchmark</span>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="custom-table" id="comparisonTable">
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Calculated Path</th>
+            <th>Total Cost</th>
+            <th>Time (ms)</th>
+            <th>Visited Nodes</th>
+            <th>Relaxations</th>
+            <th>Time Complexity</th>
+            <th>Space Complexity</th>
+            <th>Compatibility & Guarantees</th>
+          </tr>
+        </thead>
+        <tbody id="comparisonTableBody">
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">
+              Select Source and Destination and click <strong>Run All 5 Algorithms</strong> to benchmark.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Educational Analysis & Guide Section -->
+<div class="card">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-graduation-cap"></i> Theoretical Analysis & Selection Guidelines</h3>
+  </div>
+  <div class="card-body" style="font-size: 13px; line-height: 1.7; color: #334155;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+      
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #15803d;">
+        <h4 style="color: #14532d; font-size: 14px; margin-bottom: 6px;">1. Dijkstra's Algorithm</h4>
+        <p>
+          <strong>Optimal Use:</strong> Weighted graphs with strictly non-negative edges.<br>
+          <strong>Mechanism:</strong> Greedy selection using a min-priority queue (binary heap).<br>
+          <strong>Limitation:</strong> Fails with negative edge weights because greedy commitments cannot be revised.
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #2563eb;">
+        <h4 style="color: #1e40af; font-size: 14px; margin-bottom: 6px;">2. Bellman-Ford Algorithm</h4>
+        <p>
+          <strong>Optimal Use:</strong> Graphs with negative edge weights or distributed routing (Distance Vector).<br>
+          <strong>Mechanism:</strong> Relaxes all edges |V| - 1 times using dynamic programming.<br>
+          <strong>Feature:</strong> Detects unreachable and reachable negative-weight cycles on pass |V|.
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #7e22ce;">
+        <h4 style="color: #581c87; font-size: 14px; margin-bottom: 6px;">3. Floyd-Warshall Algorithm</h4>
+        <p>
+          <strong>Optimal Use:</strong> All-pairs shortest paths in dense graphs with up to a few hundred nodes.<br>
+          <strong>Mechanism:</strong> 3-nested loops computing intermediate pivots <code>D(k)[i][j]</code> in O(V³).<br>
+          <strong>Feature:</strong> Computes complete all-pairs distance matrix; detects negative cycles via diagonal elements.
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #ea580c;">
+        <h4 style="color: #9a3412; font-size: 14px; margin-bottom: 6px;">4. Breadth-First Search (BFS)</h4>
+        <p>
+          <strong>Optimal Use:</strong> Unweighted networks or minimum-hop routing (e.g. social networks, web crawler).<br>
+          <strong>Mechanism:</strong> Level-by-level queue exploration in linear time O(V + E).<br>
+          <strong>Limitation:</strong> Does NOT optimize arbitrary edge weights; minimizes edge hop count only.
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #64748b;">
+        <h4 style="color: #1e293b; font-size: 14px; margin-bottom: 6px;">5. Depth-First Search (DFS)</h4>
+        <p>
+          <strong>Optimal Use:</strong> Topological sort, cycle detection, strongly connected components, maze solving.<br>
+          <strong>Mechanism:</strong> Stack-based deep branch exploration and backtracking.<br>
+          <strong>Important:</strong> DFS is a traversal algorithm and does NOT guarantee a shortest path.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/comparison.js') }}"></script>
+{% endblock %}
+

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Algorithm Visualization{% endblock %}
+{% block page_title %}
+  <i class="fa-solid fa-play-circle" style="color: var(--btn-green); font-size: 22px;"></i>
+  Step-by-Step Algorithm Visualizer
+{% endblock %}
+{% block page_subtitle %}Live educational playback generated directly from Python algorithm execution traces.{% endblock %}
+
+{% block content %}
+<!-- Execution Query Configuration -->
+<div class="card" style="margin-bottom: 20px;">
+  <div class="card-body" style="padding: 16px 20px;">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;">
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+        <div>
+          <label for="visAlgorithm" style="font-size: 11px; font-weight: 700; color: var(--heading-green); text-transform: uppercase;">Algorithm</label>
+          <select id="visAlgorithm" class="form-control" style="padding: 6px 12px; font-size: 13px; font-weight: 600;">
+            <option value="dijkstra">Dijkstra's Algorithm</option>
+            <option value="bellman_ford">Bellman-Ford Algorithm</option>
+            <option value="floyd_warshall">Floyd-Warshall Algorithm</option>
+            <option value="bfs">Breadth-First Search (BFS)</option>
+            <option value="dfs">Depth-First Search (DFS)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="visSource" style="font-size: 11px; font-weight: 700; color: var(--heading-green); text-transform: uppercase;">Source</label>
+          <select id="visSource" class="form-control" style="padding: 6px 12px; font-size: 13px; font-weight: 600; min-width: 90px;"></select>
+        </div>
+
+        <div>
+          <label for="visDestination" style="font-size: 11px; font-weight: 700; color: var(--heading-green); text-transform: uppercase;">Destination</label>
+          <select id="visDestination" class="form-control" style="padding: 6px 12px; font-size: 13px; font-weight: 600; min-width: 90px;"></select>
+        </div>
+
+        <div style="padding-top: 18px;">
+          <button type="button" class="btn btn-primary btn-sm" id="btnLoadTrace">
+            <i class="fa-solid fa-bolt"></i> Generate Trace
+          </button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px;">
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; border: 1px solid #94a3b8;"></span> Unvisited
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #f97316;"></span> Processing
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #2563eb;"></span> Visited
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 10px; height: 3px; background: #9333ea;"></span> Explored Edge
+        </span>
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="width: 10px; height: 3px; background: #16a34a;"></span> Shortest Path
+        </span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Playback Controls Bar -->
+<div class="animation-bar">
+  <!-- Playback Buttons -->
+  <div class="anim-btn-group">
+    <button type="button" class="btn btn-secondary btn-sm" id="btnPrevStep" title="Previous Step (|◀)">
+      <i class="fa-solid fa-backward-step"></i> Prev
+    </button>
+    
+    <button type="button" class="btn btn-primary btn-sm" id="btnPlayPause" style="min-width: 90px;">
+      <i class="fa-solid fa-play"></i> Play
+    </button>
+    
+    <button type="button" class="btn btn-secondary btn-sm" id="btnNextStep" title="Next Step (▶|)">
+      Next <i class="fa-solid fa-forward-step"></i>
+    </button>
+
+    <button type="button" class="btn btn-secondary btn-sm" id="btnResetAnim" title="Reset to Start (↺)">
+      <i class="fa-solid fa-rotate-left"></i> Reset
+    </button>
+  </div>
+
+  <!-- Progress Bar & Step Counter -->
+  <div class="anim-progress-container">
+    <div class="anim-progress-bar">
+      <div class="anim-progress-fill" id="animProgressFill"></div>
+    </div>
+    <span class="badge badge-gray" id="stepCounterBadge" style="white-space: nowrap; font-size: 12px;">
+      Step 0 / 0
+    </span>
+  </div>
+
+  <!-- Speed Selector -->
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <label for="animSpeedSelect" style="font-size: 12px; font-weight: 600; color: #475569;">Speed:</label>
+    <select id="animSpeedSelect" class="form-control" style="width: auto; padding: 4px 8px; font-size: 12px;">
+      <option value="1500">0.5x (Slow)</option>
+      <option value="800" selected>1.0x (Normal)</option>
+      <option value="400">2.0x (Fast)</option>
+      <option value="150">5.0x (Ultra)</option>
+    </select>
+  </div>
+</div>
+
+<!-- Main Visualization Workspace and Step Details -->
+<div class="vis-grid">
+  <!-- Cytoscape Workspace -->
+  <div class="cy-workspace-container" style="min-height: 580px;">
+    <div class="cy-toolbar">
+      <button class="btn btn-secondary btn-sm" id="btnVisZoomIn"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      <button class="btn btn-secondary btn-sm" id="btnVisZoomOut"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+      <button class="btn btn-secondary btn-sm" id="btnVisFit"><i class="fa-solid fa-expand"></i></button>
+    </div>
+
+    <div id="cy" style="min-height: 580px;"></div>
+  </div>
+
+  <!-- Real-Time State Inspector -->
+  <div>
+    <!-- Current Step Status Card -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-gauge-high"></i> Execution State</h3>
+        <span class="badge badge-gray" id="execStatusBadge">Not Started</span>
+      </div>
+      <div class="card-body" style="font-size: 13px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Current Vertex:</span>
+          <span class="badge badge-orange" id="statusCurrentVertex">None</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Current Edge:</span>
+          <span class="badge badge-purple" id="statusCurrentEdge">None</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+          <div style="color: var(--text-muted); margin-bottom: 4px;">Visited Vertices:</div>
+          <div id="statusVisitedList" style="display: flex; flex-wrap: wrap; gap: 4px; min-height: 24px;">
+            <span style="color: #94a3b8; font-size: 12px;">None</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="color: var(--text-muted); margin-bottom: 4px;">Unvisited Vertices:</div>
+          <div id="statusUnvisitedList" style="display: flex; flex-wrap: wrap; gap: 4px;">
+            <span style="color: #94a3b8; font-size: 12px;">None</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Human Readable Step Explanation -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-circle-question"></i> Step Explanation</h3>
+      </div>
+      <div class="card-body">
+        <div id="stepExplanationBox" style="font-size: 13px; line-height: 1.6; color: #1e293b;">
+          Click <strong>Generate Trace</strong> or <strong>Play</strong> to begin stepping through the algorithm execution.
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Distance / Data Structure Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 id="dataStructureTitle"><i class="fa-solid fa-table"></i> Distance Table</h3>
+      </div>
+      <div class="card-body" style="padding: 0; max-height: 220px; overflow-y: auto;">
+        <div id="distanceTableContainer">
+          <table class="custom-table" style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th>Vertex</th>
+                <th>Distance</th>
+                <th>Predecessor</th>
+              </tr>
+            </thead>
+            <tbody id="distanceTableBody">
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                  No active trace loaded.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/animation.js') }}"></script>
+{% endblock %}
+

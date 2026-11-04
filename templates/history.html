@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Search History{% endblock %}
+{% block page_title %}
+  <i class="fa-solid fa-clock-rotate-left" style="color: var(--btn-green); font-size: 22px;"></i>
+  Path Search History
+{% endblock %}
+{% block page_subtitle %}Review your previous path calculations, timings, and route logs.{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h3>
+      <i class="fa-solid fa-list-check"></i>
+      Saved Search Records ({{ history | length }})
+    </h3>
+    {% if history %}
+      <button type="button" class="btn btn-danger btn-sm" id="btnClearHistory">
+        <i class="fa-solid fa-trash-can"></i> Clear All History
+      </button>
+    {% endif %}
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="custom-table" id="historyTable">
+        <thead>
+          <tr>
+            <th># ID</th>
+            <th>Algorithm</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Calculated Path</th>
+            <th>Total Distance</th>
+            <th>Execution Time</th>
+            <th>Timestamp</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if history %}
+            {% for item in history %}
+              <tr>
+                <td><span style="color: #64748b; font-weight: 600;">#{{ item.id }}</span></td>
+                <td>
+                  <span class="badge badge-green">{{ item.algorithm }}</span>
+                </td>
+                <td><strong>{{ item.source }}</strong></td>
+                <td><strong>{{ item.destination }}</strong></td>
+                <td>
+                  <span style="font-family: monospace; font-size: 12px; background: #f8fafc; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    {{ item.shortest_path }}
+                  </span>
+                </td>
+                <td>
+                  {% if item.total_distance is not none %}
+                    <strong style="color: #15803d;">{{ item.total_distance }}</strong>
+                  {% else %}
+                    <span class="badge badge-gray">No Path</span>
+                  {% endif %}
+                </td>
+                <td>{{ item.execution_time }} ms</td>
+                <td style="color: #64748b; font-size: 12px;">{{ item.created_at }}</td>
+                <td>
+                  <a href="{{ url_for('visualization') }}?src={{ item.source }}&dst={{ item.destination }}" class="btn btn-secondary btn-sm" title="Replay in Visualizer">
+                    <i class="fa-solid fa-play"></i> Replay
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                <i class="fa-solid fa-clock-rotate-left" style="font-size: 32px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+                No path searches recorded yet. Run calculations in the <a href="{{ url_for('shortest_path') }}" style="color: #15803d; font-weight: 600;">Shortest Path Finder</a> to automatically track results here.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const clearBtn = document.getElementById('btnClearHistory');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', async () => {
+      if (!confirm("Are you sure you want to permanently clear your search history?")) {
+        return;
+      }
+      try {
+        const res = await fetch('/api/history', { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert("Error clearing history: " + (data.error || "Unknown error"));
+        }
+      } catch (err) {
+        alert("Failed to communicate with server: " + err.message);
+      }
+    });
+  }
+</script>
+{% endblock %}
+

@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Shortest Path Finder{% endblock %}
+{% block page_title %}
+  <i class="fa-solid fa-route" style="color: var(--btn-green); font-size: 22px;"></i>
+  Shortest Path Finder
+{% endblock %}
+{% block page_subtitle %}Execute custom Python algorithm implementations and inspect verified path costs.{% endblock %}
+
+{% block content %}
+<!-- Search Query Controls Card -->
+<div class="card" style="margin-bottom: 20px;">
+  <div class="card-body" style="padding: 18px 24px;">
+    <form id="pathFinderForm" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px;">
+      <!-- Source Vertex Selection -->
+      <div style="flex: 1; min-width: 140px;">
+        <label for="finderSource" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--heading-green);">
+          <i class="fa-solid fa-location-dot" style="color: #16a34a;"></i> 1. Source Vertex
+        </label>
+        <select id="finderSource" class="form-control" required style="padding: 9px 12px; font-weight: 600;"></select>
+      </div>
+
+      <!-- Destination Vertex Selection -->
+      <div style="flex: 1; min-width: 140px;">
+        <label for="finderDestination" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--heading-green);">
+          <i class="fa-solid fa-flag-checkered" style="color: #dc2626;"></i> 2. Destination Vertex
+        </label>
+        <select id="finderDestination" class="form-control" required style="padding: 9px 12px; font-weight: 600;"></select>
+      </div>
+
+      <!-- Algorithm Selection -->
+      <div style="flex: 1.4; min-width: 200px;">
+        <label for="finderAlgorithm" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--heading-green);">
+          <i class="fa-solid fa-brain" style="color: #2563eb;"></i> 3. Select Algorithm
+        </label>
+        <select id="finderAlgorithm" class="form-control" required style="padding: 9px 12px; font-weight: 600;">
+          <option value="dijkstra">Dijkstra's Algorithm (Priority Queue)</option>
+          <option value="bellman_ford">Bellman-Ford (Supports Negative Edges)</option>
+          <option value="floyd_warshall">Floyd-Warshall (All-Pairs Dynamic)</option>
+          <option value="bfs">Breadth-First Search (Min-Hop Unweighted)</option>
+          <option value="dfs">Depth-First Search (Branch Traversal)</option>
+        </select>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 8px;">
+        <button type="submit" class="btn btn-primary" id="btnFindPath" style="padding: 10px 20px;">
+          <i class="fa-solid fa-magnifying-glass-location"></i> Find Shortest Path
+        </button>
+        <button type="button" class="btn btn-secondary" id="btnClearHighlight" style="padding: 10px 16px;">
+          <i class="fa-solid fa-rotate-left"></i> Clear
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Graph Display and Results Container -->
+<div class="vis-grid">
+  <!-- Interactive Cytoscape Workspace -->
+  <div class="cy-workspace-container" style="min-height: 560px;">
+    <div class="cy-toolbar">
+      <button class="btn btn-secondary btn-sm" id="btnFinderZoomIn"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      <button class="btn btn-secondary btn-sm" id="btnFinderZoomOut"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+      <button class="btn btn-secondary btn-sm" id="btnFinderFit"><i class="fa-solid fa-expand"></i></button>
+    </div>
+
+    <div class="cy-legend">
+      <div style="font-weight: 700; color: #1e293b; margin-bottom: 2px;">Path Visualization</div>
+      <div class="legend-item"><span class="legend-color" style="background: #16a34a;"></span> Shortest Path (Green)</div>
+      <div class="legend-item"><span class="legend-color" style="background: #e2e8f0; border: 1px solid #94a3b8;"></span> Other Vertices</div>
+    </div>
+
+    <div id="cy" style="min-height: 560px;"></div>
+  </div>
+
+  <!-- Results Output Panel -->
+  <div>
+    <div class="card" id="resultCard">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-square-poll-vertical"></i> Calculation Output</h3>
+        <span class="badge badge-gray" id="algoBadge">Ready</span>
+      </div>
+      <div class="card-body" id="resultBody">
+        <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
+          <i class="fa-solid fa-route" style="font-size: 36px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+          Select a source and destination above and click <strong>Find Shortest Path</strong> to view verified results.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    let cyInstance = null;
+    const activeGraph = AppStorage.getActiveGraph();
+
+    function initGraph() {
+      cyInstance = cytoscape({
+        container: document.getElementById('cy'),
+        elements: activeGraph.elements,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#e2e8f0',
+              'label': 'data(label)',
+              'color': '#1e293b',
+              'font-size': '12px',
+              'font-weight': 'bold',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'width': 34,
+              'height': 34,
+              'border-width': 2,
+              'border-color': '#94a3b8'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 2,
+              'line-color': '#94a3b8',
+              'target-arrow-color': '#94a3b8',
+              'target-arrow-shape': activeGraph.directed ? 'triangle' : 'none',
+              'curve-style': 'bezier',
+              'label': 'data(weight)',
+              'font-size': '11px',
+              'text-background-color': '#ffffff',
+              'text-background-opacity': 0.85,
+              'text-background-padding': 2
+            }
+          },
+          {
+            selector: '.path-node',
+            style: {
+              'background-color': '#16a34a',
+              'color': '#ffffff',
+              'border-color': '#14532d',
+              'border-width': 3,
+              'width': 38,
+              'height': 38
+            }
+          },
+          {
+            selector: '.path-edge',
+            style: {
+              'line-color': '#16a34a',
+              'target-arrow-color': '#16a34a',
+              'width': 4,
+              'z-index': 100
+            }
+          }
+        ],
+        layout: { name: 'preset' }
+      });
+      cyInstance.fit(null, 30);
+
+      // Populate dropdowns
+      const srcSelect = document.getElementById('finderSource');
+      const dstSelect = document.getElementById('finderDestination');
+      srcSelect.innerHTML = '';
+      dstSelect.innerHTML = '';
+
+      const nodes = cyInstance.nodes();
+      nodes.forEach((n, idx) => {
+        const id = n.id();
+        const opt1 = new Option(id, id);
+        const opt2 = new Option(id, id);
+        srcSelect.add(opt1);
+        dstSelect.add(opt2);
+      });
+
+      if (nodes.length > 1) {
+        dstSelect.selectedIndex = nodes.length - 1;
+      }
+    }
+
+    initGraph();
+
+    // Zoom and Fit Controls
+    document.getElementById('btnFinderZoomIn').addEventListener('click', () => {
+      cyInstance.zoom(cyInstance.zoom() * 1.25);
+    });
+    document.getElementById('btnFinderZoomOut').addEventListener('click', () => {
+      cyInstance.zoom(cyInstance.zoom() * 0.8);
+    });
+    document.getElementById('btnFinderFit').addEventListener('click', () => {
+      cyInstance.fit(null, 30);
+    });
+
+    // Reset Highlights
+    function resetHighlight() {
+      cyInstance.elements().removeClass('path-node path-edge');
+      document.getElementById('algoBadge').textContent = 'Ready';
+      document.getElementById('algoBadge').className = 'badge badge-gray';
+    }
+
+    document.getElementById('btnClearHighlight').addEventListener('click', () => {
+      resetHighlight();
+      document.getElementById('resultBody').innerHTML = `
+        <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
+          <i class="fa-solid fa-route" style="font-size: 36px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+          Select a source and destination above and click <strong>Find Shortest Path</strong>.
+        </div>
+      `;
+    });
+
+    // Handle Form Submit
+    document.getElementById('pathFinderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resetHighlight();
+
+      const source = document.getElementById('finderSource').value;
+      const destination = document.getElementById('finderDestination').value;
+      const algorithm = document.getElementById('finderAlgorithm').value;
+      const btn = document.getElementById('btnFindPath');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Calculating...`;
+
+      try {
+        const response = await fetch('/api/algorithm/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            algorithm: algorithm,
+            source: source,
+            destination: destination,
+            graph_data: activeGraph.elements,
+            directed: activeGraph.directed,
+            save_to_history: true
+          })
+        });
+
+        const data = await response.json();
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-magnifying-glass-location"></i> Find Shortest Path`;
+
+        const badge = document.getElementById('algoBadge');
+        badge.textContent = data.algorithm || algorithm;
+        badge.className = data.success ? 'badge badge-green' : 'badge badge-orange';
+
+        if (!data.success) {
+          document.getElementById('resultBody').innerHTML = `
+            <div class="alert alert-danger" style="margin-bottom: 16px;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <div>
+                <strong>Algorithm Error:</strong><br>
+                ${data.error}
+              </div>
+            </div>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.5;">${data.explanation || ''}</p>
+          `;
+          return;
+        }
+
+        // Highlight nodes and edges
+        if (data.path && data.path.length > 0) {
+          data.path.forEach(nodeId => {
+            cyInstance.getElementById(nodeId).addClass('path-node');
+          });
+
+          for (let i = 0; i < data.path.length - 1; i++) {
+            const u = data.path[i];
+            const v = data.path[i+1];
+            // Find edge connecting u and v
+            const edges = cyInstance.edges().filter(e => {
+              const src = e.source().id();
+              const tgt = e.target().id();
+              return (src === u && tgt === v) || (!activeGraph.directed && src === v && tgt === u);
+            });
+            edges.addClass('path-edge');
+          }
+        }
+
+        // Format path breadcrumb
+        const pathBreadcrumb = data.path && data.path.length > 0
+          ? data.path.map(n => `<span style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 6px; font-weight: 700;">${n}</span>`).join(' <i class="fa-solid fa-arrow-right" style="color: #94a3b8; font-size: 10px;"></i> ')
+          : `<span class="badge badge-gray">No Path Exists</span>`;
+
+        document.getElementById('resultBody').innerHTML = `
+          <div style="margin-bottom: 18px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">
+              Shortest Path Sequence
+            </div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
+              ${pathBreadcrumb}
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 11px; color: #64748b;">Total Distance / Cost</div>
+              <div style="font-size: 20px; font-weight: 700; color: #15803d;">
+                ${data.total_distance !== null ? data.total_distance : 'N/A'}
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 11px; color: #64748b;">Execution Time</div>
+              <div style="font-size: 20px; font-weight: 700; color: #2563eb;">
+                ${data.execution_time_ms} ms
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 11px; color: #64748b;">Visited Vertices</div>
+              <div style="font-size: 18px; font-weight: 700; color: #1e293b;">
+                ${data.visited_count}
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 11px; color: #64748b;">Relaxations / Checks</div>
+              <div style="font-size: 18px; font-weight: 700; color: #7e22ce;">
+                ${data.relaxations_count}
+              </div>
+            </div>
+          </div>
+
+          <div class="step-trace-card" style="margin-bottom: 16px;">
+            <div class="step-trace-header">
+              <strong style="color: #14532d; font-size: 12px;">Algorithm Explanation</strong>
+              <span class="badge badge-green">${data.time_complexity}</span>
+            </div>
+            <p class="step-trace-text">${data.explanation}</p>
+          </div>
+
+          <a href="{{ url_for('visualization') }}?algo=${algorithm}&src=${source}&dst=${destination}" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-play"></i> Step-by-Step Interactive Animation
+          </a>
+        `;
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-magnifying-glass-location"></i> Find Shortest Path`;
+        alert("Failed to execute shortest path query: " + err.message);
+      }
+    });
+  });
+</script>
+{% endblock %}
+

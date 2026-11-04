@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Graph Editor{% endblock %}
+{% block page_title %}
+  <i class="fa-solid fa-bezier-curve" style="color: var(--btn-green); font-size: 22px;"></i>
+  Interactive Graph Editor
+{% endblock %}
+{% block page_subtitle %}Design, configure, and manipulate directed/undirected weighted graphs with Cytoscape.js.{% endblock %}
+
+{% block content %}
+<!-- Top Action Toolbar -->
+<div class="card" style="margin-bottom: 20px;">
+  <div class="card-body" style="padding: 16px 20px;">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;">
+      
+      <!-- Graph Editing Tools -->
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddNode">
+          <i class="fa-solid fa-plus-circle"></i> Add Vertex
+        </button>
+
+        <button type="button" class="btn btn-outline-green btn-sm" id="btnAddEdge">
+          <i class="fa-solid fa-link"></i> Connect Edge
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-sm" id="btnEditSelected">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Selected
+        </button>
+
+        <button type="button" class="btn btn-danger btn-sm" id="btnDeleteSelected">
+          <i class="fa-solid fa-trash-can"></i> Delete Selected
+        </button>
+
+        <div style="height: 24px; width: 1px; background: #e2e8f0; margin: 0 4px;"></div>
+
+        <!-- Graph Mode Toggle: Directed vs Undirected -->
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+          <input type="checkbox" id="directedToggle" checked style="accent-color: var(--btn-green); width: 16px; height: 16px;">
+          <span>Directed Graph</span>
+        </label>
+      </div>
+
+      <!-- Presets, Storage & Utility Tools -->
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+        <!-- Sample Graphs Dropdown -->
+        <select id="sampleGraphSelect" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;">
+          <option value="">-- Load Sample Graph --</option>
+          <option value="classic_6">Classic 6-Node Network (Positive)</option>
+          <option value="negative_dag">Negative-Edge DAG (Bellman-Ford)</option>
+          <option value="negative_cycle">Negative Cycle Demo Graph</option>
+          <option value="undirected_web">Undirected Multi-Path Web</option>
+          <option value="all_pairs_4">All-Pairs 4-City Network</option>
+          <option value="disconnected">Disconnected Components</option>
+        </select>
+
+        <!-- Saved Graphs Dropdown -->
+        <select id="userSavedGraphsSelect" class="form-control" style="width: auto; padding: 6px 12px; font-size: 13px;">
+          <option value="">-- Load Saved Graph --</option>
+        </select>
+
+        <button type="button" class="btn btn-secondary btn-sm" id="btnRandomGraph" title="Generate random graph">
+          <i class="fa-solid fa-dice"></i> Random
+        </button>
+
+        <button type="button" class="btn btn-outline-green btn-sm" id="btnSaveGraphModal" title="Save graph to database">
+          <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-sm" id="btnClearGraph" title="Clear all nodes and edges">
+          <i class="fa-solid fa-eraser"></i> Clear
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-sm" id="btnResetLayout" title="Reset layout positions">
+          <i class="fa-solid fa-arrows-rotate"></i> Reset
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Graph Workspace and Live Info Panel -->
+<div class="vis-grid">
+  <!-- Interactive Cytoscape Canvas Area -->
+  <div class="cy-workspace-container" style="min-height: 580px;">
+    <div class="cy-toolbar">
+      <button class="btn btn-secondary btn-sm" id="btnZoomIn" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+      <button class="btn btn-secondary btn-sm" id="btnZoomOut" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+      <button class="btn btn-secondary btn-sm" id="btnFit" title="Fit to Viewport"><i class="fa-solid fa-expand"></i></button>
+    </div>
+
+    <div class="cy-legend">
+      <div style="font-weight: 700; color: #1e293b; margin-bottom: 2px;">Workspace Controls</div>
+      <div class="legend-item"><i class="fa-solid fa-hand-pointer" style="color: #64748b;"></i> Click to select vertex/edge</div>
+      <div class="legend-item"><i class="fa-solid fa-arrows-up-down-left-right" style="color: #64748b;"></i> Drag vertices to reposition</div>
+      <div class="legend-item"><i class="fa-solid fa-keyboard" style="color: #64748b;"></i> Press [Del] to remove selected</div>
+    </div>
+
+    <!-- Cytoscape Graph Canvas with strictly white background -->
+    <div id="cy" style="min-height: 580px;"></div>
+  </div>
+
+  <!-- Right Inspector & Configuration Panel -->
+  <div>
+    <!-- Graph Properties Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-circle-info"></i> Graph Summary</h3>
+        <span class="badge badge-green" id="badgeGraphType">Directed</span>
+      </div>
+      <div class="card-body" style="font-size: 13px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Total Vertices:</span>
+          <strong id="inspectorVerticesCount">0</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Total Edges:</span>
+          <strong id="inspectorEdgesCount">0</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: var(--text-muted);">Negative Weights:</span>
+          <span class="badge badge-gray" id="badgeNegativeWeights">None</span>
+        </div>
+        <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 12px 0;">
+        <div style="display: flex; gap: 8px;">
+          <a href="{{ url_for('shortest_path') }}" class="btn btn-primary btn-sm" style="flex: 1;">
+            <i class="fa-solid fa-route"></i> Find Path
+          </a>
+          <a href="{{ url_for('visualization') }}" class="btn btn-outline-green btn-sm" style="flex: 1;">
+            <i class="fa-solid fa-play"></i> Animate
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Element Inspector Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-crosshairs"></i> Element Details</h3>
+      </div>
+      <div class="card-body" id="elementInspector" style="font-size: 13px; color: var(--text-muted);">
+        <p style="text-align: center; padding: 20px 0;">
+          <i class="fa-solid fa-arrow-pointer" style="font-size: 20px; color: #cbd5e1; display: block; margin-bottom: 8px;"></i>
+          Click any vertex or edge in the graph to inspect or modify its attributes.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Vertex Modal -->
+<div class="modal-overlay" id="addVertexModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Add New Vertex</h3>
+      <button type="button" class="modal-close-btn" id="closeAddVertexModal">&times;</button>
+    </div>
+    <form id="formAddVertex">
+      <div class="form-group">
+        <label for="vertexLabel">Vertex Label / ID</label>
+        <input type="text" id="vertexLabel" class="form-control" placeholder="e.g. A, Node1, CityX" required maxlength="12">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        <i class="fa-solid fa-plus"></i> Add to Graph
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Connect Edge Modal -->
+<div class="modal-overlay" id="addEdgeModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Connect Two Vertices</h3>
+      <button type="button" class="modal-close-btn" id="closeAddEdgeModal">&times;</button>
+    </div>
+    <form id="formAddEdge">
+      <div class="form-group">
+        <label for="edgeSource">Source Vertex</label>
+        <select id="edgeSource" class="form-control" required></select>
+      </div>
+      <div class="form-group">
+        <label for="edgeTarget">Target Vertex</label>
+        <select id="edgeTarget" class="form-control" required></select>
+      </div>
+      <div class="form-group">
+        <label for="edgeWeight">Edge Weight (Positive, Zero, or Negative)</label>
+        <input type="number" id="edgeWeight" class="form-control" value="1" step="any" required>
+        <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">
+          Note: Dijkstra supports &ge; 0 weights only. Bellman-Ford & Floyd-Warshall accept negative weights.
+        </span>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        <i class="fa-solid fa-link"></i> Add Edge
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Element Modal -->
+<div class="modal-overlay" id="editElementModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title" id="editModalTitle">Edit Element</h3>
+      <button type="button" class="modal-close-btn" id="closeEditModal">&times;</button>
+    </div>
+    <form id="formEditElement">
+      <div id="editElementFields"></div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 14px;">
+        <i class="fa-solid fa-check"></i> Apply Changes
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Save Graph to Database Modal -->
+<div class="modal-overlay" id="saveGraphModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Save Graph to Database</h3>
+      <button type="button" class="modal-close-btn" id="closeSaveGraphModal">&times;</button>
+    </div>
+    <form id="formSaveGraph">
+      <div class="form-group">
+        <label for="saveGraphName">Graph Name</label>
+        <input type="text" id="saveGraphName" class="form-control" placeholder="e.g. My Network Topology 1" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        <i class="fa-solid fa-floppy-disk"></i> Save Graph
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Random Graph Generator Modal -->
+<div class="modal-overlay" id="randomGraphModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Random Graph Generator</h3>
+      <button type="button" class="modal-close-btn" id="closeRandomModal">&times;</button>
+    </div>
+    <form id="formRandomGraph">
+      <div class="form-group">
+        <label for="randomNodesCount">Number of Vertices (3 - 10)</label>
+        <input type="number" id="randomNodesCount" class="form-control" value="6" min="3" max="10" required>
+      </div>
+      <div class="form-group">
+        <label for="randomDensity">Edge Density (0.2 = Sparse, 0.7 = Dense)</label>
+        <input type="range" id="randomDensity" min="0.2" max="0.7" step="0.1" value="0.4" style="width: 100%; accent-color: var(--btn-green);">
+        <span id="densityVal" style="font-size: 12px; font-weight: 600; color: #15803d;">0.4</span>
+      </div>
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+          <input type="checkbox" id="randomAllowNegative" style="accent-color: var(--btn-green); width: 16px; height: 16px;">
+          <span>Allow Negative Edge Weights</span>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Graph
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/graph.js') }}"></script>
+{% endblock %}
+

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Shortest Path Finder{% endblock %} - Advanced Graph Algorithms</title>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Light Green Portal Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+  <!-- Cytoscape.js CDN for interactive graph visualization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  
+  <!-- Chart.js CDN for algorithm performance comparison charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">
+        <i class="fa-solid fa-diagram-project"></i>
+      </div>
+      <div class="sidebar-title">
+        <h2>GraphPath</h2>
+        <span>AGA Academic Portal</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-category">Main Navigation</div>
+      <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i>
+        <span>1. Dashboard</span>
+      </a>
+      <a href="{{ url_for('graph_editor') }}" class="nav-link {% if request.endpoint == 'graph_editor' %}active{% endif %}">
+        <i class="fa-solid fa-bezier-curve"></i>
+        <span>2. Graph Editor</span>
+      </a>
+      <a href="{{ url_for('shortest_path') }}" class="nav-link {% if request.endpoint == 'shortest_path' %}active{% endif %}">
+        <i class="fa-solid fa-route"></i>
+        <span>3. Shortest Path Finder</span>
+      </a>
+      <a href="{{ url_for('visualization') }}" class="nav-link {% if request.endpoint == 'visualization' %}active{% endif %}">
+        <i class="fa-solid fa-play-circle"></i>
+        <span>4. Algorithm Visualization</span>
+      </a>
+      <a href="{{ url_for('comparison') }}" class="nav-link {% if request.endpoint == 'comparison' %}active{% endif %}">
+        <i class="fa-solid fa-chart-column"></i>
+        <span>5. Algorithm Comparison</span>
+      </a>
+      
+      <div class="nav-category">Records & Info</div>
+      <a href="{{ url_for('history') }}" class="nav-link {% if request.endpoint == 'history' %}active{% endif %}">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span>6. Search History</span>
+      </a>
+      <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">
+        <i class="fa-solid fa-book-open"></i>
+        <span>7. About Project</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-info">
+          <div class="user-avatar">
+            {{ current_user.full_name[0] | upper if current_user else 'U' }}
+          </div>
+          <div class="user-details">
+            <div class="user-name">{{ current_user.full_name if current_user else 'Student User' }}</div>
+            <div class="user-role">@{{ current_user.username if current_user else 'user' }}</div>
+          </div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn" title="8. Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+      <div class="page-title-box">
+        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+        <p>{% block page_subtitle %}Advanced Graph Algorithms (AGA) Analysis & Visualizer{% endblock %}</p>
+      </div>
+      <div class="academic-tag">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <span>B.Tech CSE Project</span>
+      </div>
+    </header>
+
+    <!-- Main Body Container -->
+    <main class="content-body">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Shared Application JavaScript -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

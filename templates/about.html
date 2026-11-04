@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}About Project{% endblock %}
+{% block page_title %}
+  <i class="fa-solid fa-book-open" style="color: var(--btn-green); font-size: 22px;"></i>
+  Academic Project Documentation
+{% endblock %}
+{% block page_subtitle %}Comprehensive technical documentation for B.Tech Computer Science &bull; Advanced Graph Algorithms (AGA).{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-file-lines"></i> Project Overview & Abstract</h3>
+    <span class="badge badge-green">Course Code: AGA-701</span>
+  </div>
+  <div class="card-body" style="font-size: 14px; line-height: 1.8; color: #334155;">
+    <h2 style="font-size: 20px; color: var(--heading-green); margin-bottom: 8px;">
+      Shortest Path Finder Using Graph Algorithms
+    </h2>
+    <p style="margin-bottom: 16px;">
+      <strong>Abstract:</strong> In computer science and discrete mathematics, determining the most efficient route between nodes in a network topology represents a foundational optimization challenge. This full-stack web application is developed as a comprehensive educational and analytical system for the B.Tech Computer Science Advanced Graph Algorithms (AGA) curriculum. It provides interactive graph topology modeling using Cytoscape.js, step-by-step visual animation of algorithm internal states, empirical runtime performance benchmarking using Chart.js, and persistent search histories backed by SQLite. Custom modular Python implementations of five core graph algorithms—Dijkstra, Bellman-Ford, Floyd-Warshall, Breadth-First Search (BFS), and Depth-First Search (DFS)—are evaluated against variable graph constraints including directed, undirected, non-negative, and negative-weight topologies.
+    </p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <div style="background: #f8fafc; padding: 14px; border-radius: 8px; border-left: 3px solid #15803d;">
+        <strong>Department:</strong> Computer Science & Engineering<br>
+        <strong>Domain:</strong> Advanced Graph Algorithms & Web Engineering
+      </div>
+      <div style="background: #f8fafc; padding: 14px; border-radius: 8px; border-left: 3px solid #2563eb;">
+        <strong>Backend Stack:</strong> Python 3.11, Flask, SQLite3, Werkzeug<br>
+        <strong>Frontend Stack:</strong> HTML5, CSS3, ES6 JavaScript, Cytoscape.js, Chart.js
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Introduction, Problem Statement, Objectives -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-compass"></i> Problem Statement & Motivation</h3>
+    </div>
+    <div class="card-body" style="font-size: 13.5px; line-height: 1.7; color: #334155;">
+      <p style="margin-bottom: 12px;">
+        Traditional algorithm pedagogy frequently relies upon static textbook diagrams and theoretical pseudo-code. Students and engineers often struggle to develop an intuitive mental model of dynamic edge relaxation, priority queue state transitions, negative cycle detection mechanics, and all-pairs matrix progressions.
+      </p>
+      <p>
+        Furthermore, arbitrary unweighted traversals like BFS are often conflated with weighted shortest-path optimization. This project addresses these educational challenges by creating an interactive, transparent sandbox where every relaxation step is logged, explained, and rendered visually from genuine backend Python execution traces.
+      </p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-bullseye"></i> Core Project Objectives</h3>
+    </div>
+    <div class="card-body" style="font-size: 13.5px; line-height: 1.7; color: #334155;">
+      <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+        <li>Implement five core graph algorithms in pure Python without external graph-theory wrappers.</li>
+        <li>Build an interactive Cytoscape.js canvas supporting live vertex insertion, deletion, edge weighting, and repositioning.</li>
+        <li>Generate granular execution trace arrays on the backend to drive animated step-by-step visualizations.</li>
+        <li>Provide comparative empirical benchmarks measuring CPU execution time, node visit counts, and edge relaxations.</li>
+        <li>Maintain isolated user sessions, credential hashing with Werkzeug, and SQLite storage for topologies and search histories.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Graph Theory Foundations -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-diagram-project"></i> Graph Representations & Theoretical Foundations</h3>
+  </div>
+  <div class="card-body" style="font-size: 13.5px; line-height: 1.7; color: #334155;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+      <div>
+        <h4 style="color: var(--heading-green); margin-bottom: 6px;">Vertices (V) and Edges (E)</h4>
+        <p>
+          A graph <code>G = (V, E)</code> consists of a set of vertices <code>V</code> representing entities (e.g. routers, intersections) and edges <code>E &sube; V &times; V</code> representing relationships or channels connecting vertex pairs.
+        </p>
+      </div>
+
+      <div>
+        <h4 style="color: var(--heading-green); margin-bottom: 6px;">Directed vs. Undirected</h4>
+        <p>
+          In a directed graph (digraph), edges possess an orientation: <code>(u, v) &ne; (v, u)</code>. In undirected graphs, edges are bidirectional, permitting symmetric traversal between adjacent nodes.
+        </p>
+      </div>
+
+      <div>
+        <h4 style="color: var(--heading-green); margin-bottom: 6px;">Weighted vs. Unweighted</h4>
+        <p>
+          Weighted graphs assign a numerical scalar <code>w(u, v)</code> representing latency, distance, or financial cost. Unweighted graphs treat every edge as possessing equal unit cost 1.
+        </p>
+      </div>
+
+      <div>
+        <h4 style="color: var(--heading-green); margin-bottom: 6px;">Adjacency List vs. Matrix</h4>
+        <p>
+          This application utilizes adjacency lists <code>O(V + E)</code> space for sparse algorithmic traversals, and dynamic 2D distance matrices <code>O(V²)</code> space for Floyd-Warshall all-pairs computation.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Algorithm Analysis Cards -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-microchip"></i> Algorithm Implementations & Mechanics</h3>
+  </div>
+  <div class="card-body" style="font-size: 13.5px; line-height: 1.7; color: #334155;">
+    
+    <div style="margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
+      <h4 style="color: #15803d; font-size: 15px; margin-bottom: 6px;">
+        1. Dijkstra's Algorithm (Greedy Single-Source Shortest Path)
+      </h4>
+      <p>
+        <strong>Concept:</strong> Discovered by Edsger W. Dijkstra in 1956. Uses a min-priority queue (implemented via Python's <code>heapq</code>) to repeatedly extract the unvisited vertex with minimum tentative distance and relax its outgoing incident edges.<br>
+        <strong>Key Invariant:</strong> Assumes that the shortest path to an extracted vertex cannot be improved by future explorations. Therefore, it requires strictly non-negative edge weights (<code>w(u, v) &ge; 0</code>). If a negative weight is detected, our implementation immediately rejects the query with an educational alert directing the user to Bellman-Ford.<br>
+        <strong>Time Complexity:</strong> <code>O((V + E) log V)</code> using a binary heap; <strong>Space Complexity:</strong> <code>O(V)</code>.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
+      <h4 style="color: #2563eb; font-size: 15px; margin-bottom: 6px;">
+        2. Bellman-Ford Algorithm (Dynamic Programming with Negative Weight Support)
+      </h4>
+      <p>
+        <strong>Concept:</strong> Formulated by Richard Bellman and Lester Ford Jr. in 1958. Relaxes all edges in the graph across <code>|V| - 1</code> consecutive passes. A simple shortest path in a graph of <code>|V|</code> vertices can contain at most <code>|V| - 1</code> edges, ensuring convergence if no negative cycles exist.<br>
+        <strong>Negative-Weight Cycle Detection:</strong> On pass <code>|V|</code>, if any edge can still be relaxed, the algorithm proves the existence of a negative-weight cycle reachable from the source. The implementation traces and isolates the cycle vertices, warning the user that an optimal minimum path is mathematically undefined.<br>
+        <strong>Time Complexity:</strong> <code>O(V &middot; E)</code>; <strong>Space Complexity:</strong> <code>O(V)</code>.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
+      <h4 style="color: #7e22ce; font-size: 15px; margin-bottom: 6px;">
+        3. Floyd-Warshall Algorithm (All-Pairs Dynamic Programming)
+      </h4>
+      <p>
+        <strong>Concept:</strong> Published by Robert Floyd and Stephen Warshall in 1962. Operates on a distance matrix <code>D</code>. It systematically considers every vertex <code>k &isin; V</code> as an intermediate pivot and evaluates whether <code>D[i][k] + D[k][j] &lt; D[i][j]</code>.<br>
+        <strong>Reconstruction:</strong> Tracks a parallel predecessor/next-hop matrix <code>next_node[i][j]</code> to reconstruct the exact path between any chosen source and destination. Detects negative cycles if any diagonal entry <code>D[i][i] &lt; 0</code>.<br>
+        <strong>Time Complexity:</strong> <code>O(V³)</code>; <strong>Space Complexity:</strong> <code>O(V²)</code>.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 22px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;">
+      <h4 style="color: #ea580c; font-size: 15px; margin-bottom: 6px;">
+        4. Breadth-First Search (BFS)
+      </h4>
+      <p>
+        <strong>Concept:</strong> Traverses graphs radially level-by-level utilizing a first-in, first-out (FIFO) queue (<code>collections.deque</code>).<br>
+        <strong>Shortest Path Guarantee:</strong> BFS strictly guarantees the shortest path in terms of the minimum number of edge hops on unweighted graphs. On weighted graphs, our interface highlights that BFS minimizes hop count rather than total edge weight sum.<br>
+        <strong>Time Complexity:</strong> <code>O(V + E)</code>; <strong>Space Complexity:</strong> <code>O(V)</code>.
+      </p>
+    </div>
+
+    <div>
+      <h4 style="color: #475569; font-size: 15px; margin-bottom: 6px;">
+        5. Depth-First Search (DFS)
+      </h4>
+      <p>
+        <strong>Concept:</strong> Explores along each topological branch as deeply as possible before backtracking via an explicit recursion stack.<br>
+        <strong>Important Academic Distinction:</strong> DFS is an exhaustive graph traversal mechanism and DOES NOT guarantee a shortest path under any metric. It is included to demonstrate exploration order, discovery timestamps, and stack backtracking.<br>
+        <strong>Time Complexity:</strong> <code>O(V + E)</code>; <strong>Space Complexity:</strong> <code>O(V)</code>.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Big-O Complexity Comparison Matrix -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3><i class="fa-solid fa-table"></i> Asymptotic Complexity & Feature Matrix</h3>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Time Complexity</th>
+            <th>Space Complexity</th>
+            <th>Type</th>
+            <th>Negative Weights</th>
+            <th>Negative Cycles</th>
+            <th>Optimality Guarantee</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Dijkstra</strong></td>
+            <td><code>O((V + E) log V)</code></td>
+            <td><code>O(V)</code></td>
+            <td>Single-Source Shortest Path</td>
+            <td><span class="badge badge-orange"><i class="fa-solid fa-xmark"></i> Rejects</span></td>
+            <td><span class="badge badge-orange"><i class="fa-solid fa-xmark"></i> Fails</span></td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> Guaranteed (Non-neg)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Bellman-Ford</strong></td>
+            <td><code>O(V &middot; E)</code></td>
+            <td><code>O(V)</code></td>
+            <td>Single-Source Shortest Path</td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> Fully Supported</span></td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> Detects & Traces</span></td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> Guaranteed</span></td>
+          </tr>
+          <tr>
+            <td><strong>Floyd-Warshall</strong></td>
+            <td><code>O(V³)</code></td>
+            <td><code>O(V²)</code></td>
+            <td>All-Pairs Shortest Path</td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> Fully Supported</span></td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> Detects Diagonal</span></td>
+            <td><span class="badge badge-green"><i class="fa-solid fa-check"></i> All Pairs</span></td>
+          </tr>
+          <tr>
+            <td><strong>BFS</strong></td>
+            <td><code>O(V + E)</code></td>
+            <td><code>O(V)</code></td>
+            <td>Level Traversal</td>
+            <td><span class="badge badge-gray">N/A (Unweighted)</span></td>
+            <td><span class="badge badge-gray">N/A</span></td>
+            <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i> Min Hops Only</span></td>
+          </tr>
+          <tr>
+            <td><strong>DFS</strong></td>
+            <td><code>O(V + E)</code></td>
+            <td><code>O(V)</code></td>
+            <td>Depth Traversal</td>
+            <td><span class="badge badge-gray">N/A</span></td>
+            <td><span class="badge badge-gray">N/A</span></td>
+            <td><span class="badge badge-orange"><i class="fa-solid fa-xmark"></i> No Guarantee</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Real-World Applications & Future Scope -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-earth-americas"></i> Real-World Applications</h3>
+    </div>
+    <div class="card-body" style="font-size: 13.5px; line-height: 1.7; color: #334155;">
+      <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+        <li><strong>GPS & Mapping Services:</strong> Google Maps and OpenStreetMap employ accelerated variants of Dijkstra (e.g. A* search, Contraction Hierarchies) for turn-by-turn road navigation.</li>
+        <li><strong>Internet Routing Protocols:</strong> Link-State routing protocols like OSPF (Open Shortest Path First) run Dijkstra, while Distance-Vector protocols like RIP (Routing Information Protocol) utilize Bellman-Ford.</li>
+        <li><strong>Telecommunications & Bandwidth Allocation:</strong> Determining minimum latency routes across fiber optic backbones and peer exchange points.</li>
+        <li><strong>Financial Arbitrage:</strong> Detecting foreign currency exchange arbitrage cycles by taking negative logarithms of exchange rates and running Bellman-Ford negative-cycle detection.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0;">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-rocket"></i> Future Enhancements</h3>
+    </div>
+    <div class="card-body" style="font-size: 13.5px; line-height: 1.7; color: #334155;">
+      <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+        <li><strong>Heuristic Algorithms:</strong> Incorporation of A* Search with Euclidean and Manhattan spatial heuristics.</li>
+        <li><strong>Spanning Tree Algorithms:</strong> Visualization of Kruskal's and Prim's Minimum Spanning Tree (MST) algorithms.</li>
+        <li><strong>Flow Networks:</strong> Adding Ford-Fulkerson and Edmonds-Karp Maximum Flow algorithms.</li>
+        <li><strong>Large-Scale Dataset Import:</strong> Direct import and export of GIS Shapefiles and OpenStreetMap XML files.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
